@@ -24,7 +24,9 @@ Open the live demo on a phone or a laptop and:
 2. Tap **Example: a $40 budget**. The agent refuses, and says why in
    CommonTape's own words.
 3. **Record a voice note** or **Add a photo** of a room instead of typing.
-   This needs a Meta model connected; the page says at the top when it is not.
+   A photo shows the room, not what kind of home it is, so the agent asks;
+   one tap on **Apartment**, **Studio**, **House**, **Condo** or
+   **Townhouse** sends the same request again with that added.
 4. After a request, press **Book this**, then **Use sample details** and
    **Book it**. That books the slot for real, at a pretend business (below),
    and shows the booking.
@@ -208,7 +210,11 @@ real cleaner.
 
 The sample voice note in `fixtures/` is made by `scripts/make-voice-note.sh`
 with eSpeak NG's own voice, which anyone may use (the macOS voices are for
-personal, non-commercial use only).
+personal, non-commercial use only). The sample home photo,
+`fixtures/home-photo.jpg`, is "Interior Living" by Jarosław Ceborski, from
+[StockSnap](https://stocksnap.io/photo/interior-living-6SMA09U7Y8) under the
+CC0 licence (no rights reserved), at 960 pixels wide with its metadata
+removed.
 
 ## Where things are
 
@@ -230,8 +236,9 @@ As of 26 Oct 2026:
 - **Live on Meta's model:** the live demo runs on Muse Spark Open, served by
   Baseten. A typed request comes back in about 6 seconds and a voice note in
   about 10, each with the right job and CommonTape's exact price, and the
-  model hears the voice note itself and writes down what was said. Photos
-  reach the model and it describes what it sees.
+  model hears the voice note itself and writes down what was said. With a
+  photo, it describes the room; it does not guess what kind of home it is,
+  so the words say it, or the page asks with one-tap buttons.
 - **Live bookings:** on 26 Oct a live test booked the pretend business five
   times through this site, with no wrong booking and no duplicate, and
   cancelled every one. That ran on the stand-in model, before Muse was
@@ -239,7 +246,7 @@ As of 26 Oct 2026:
 - **Built, not yet run live:** Muse Spark and Muse Voice Transcribe through
   the Meta Model API. Meta's developer console is not open in the builder's
   country, so the live demo uses Muse Spark Open.
-- **Still to come:** the sample home photo and the video.
+- **Still to come:** the video.
 
 ## Licence
 

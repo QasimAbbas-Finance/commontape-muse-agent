@@ -88,6 +88,17 @@ try {
     `"Book it" names the option the person saw (${sent.confirm?.amount} at ${sent.confirm?.allocation_id?.slice(0, 8)})`);
   await js("window.fetch = window.__realFetch; true");
 
+  // Home-type buttons: a request with no kind of home gets no price; one tap resends it with "It is an apartment." added.
+  await js("document.getElementById('text').value = 'Please clean my place in ZIP 10001, any morning next week.'; document.getElementById('go').click(); true");
+  await until("!!document.getElementById('home-types')", 30_000);
+  const buttons = await js("[...document.querySelectorAll('#home-types button')].map(b => b.textContent).join(',')");
+  check(buttons === "Apartment,Studio,House,Condo,Townhouse", `no kind of home: the page asks with buttons (${buttons})`);
+  await js("[...document.querySelectorAll('#home-types button')].find(b => b.textContent === 'Apartment').click(); true");
+  await until("/\\$\\d+/.test(document.getElementById('result').innerText) && !document.getElementById('home-types')", 30_000);
+  const typed2 = await js("({ sent: window.__bodies.at(-1).text, box: document.getElementById('text').value })");
+  check(/It is an apartment\.$/.test(typed2.sent) && typed2.box === typed2.sent, `one tap resends with the kind of home and gets a price ("${typed2.sent.slice(-22)}")`);
+  check(await noSideways(), "390 px: no sideways scroll with the home-type buttons");
+
   // Voice note: Chrome's fake microphone, about 2 seconds, then the WAV the page would send goes through ffprobe.
   await js("document.getElementById('record').click(); true");
   await until("document.getElementById('record').classList.contains('recording')", 10_000);

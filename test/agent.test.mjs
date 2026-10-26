@@ -162,6 +162,7 @@ test("with nothing said about the home, CommonTape cannot price it, and the plan
   const a = await run({ text: "Please clean my place in ZIP 10001", dry_run: false, customer: CUSTOMER }, ct);
   assert.equal(a.plan.action, "none");
   assert.match(a.plan.reason, /how many bedrooms and bathrooms/);
+  assert.deepEqual(a.needs, ["home_type"], "the page offers the home-type buttons");
   assert.deepEqual(ct.calls.map((c) => c.name), ["search"]);
 });
 

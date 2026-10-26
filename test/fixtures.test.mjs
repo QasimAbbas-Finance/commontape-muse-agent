@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
 const MAX_BYTES = 1_000_000;
 const PHOTO = new URL("../fixtures/home-photo.jpg", import.meta.url);
@@ -23,7 +23,7 @@ test("the voice note is a WAV that muse-voice-transcribe takes: PCM, mono, 16-bi
   assert.equal(wrap(wav, "audio_base64").audio_base64.length, Math.ceil(wav.length / 3) * 4);
 });
 
-test("the home photo is a JPEG under 1 MB with no camera details", { skip: !existsSync(PHOTO) && "made with Muse Image once the Meta key is in" }, () => {
+test("the home photo is a JPEG under 1 MB with no camera details", () => {
   const jpg = readFileSync(PHOTO);
   assert.ok(jpg.length > 1000 && jpg.length < MAX_BYTES, `${jpg.length} bytes`);
   assert.equal(jpg.readUInt16BE(0), 0xffd8, "JPEG");

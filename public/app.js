@@ -153,7 +153,7 @@ async function ask(request) {
   return answer;
 }
 
-$("ask").addEventListener("submit", async (e) => {
+$("ask").addEventListener("submit", (e) => {
   e.preventDefault();
   const request = { dry_run: true };
   const text = $("text").value.trim();
@@ -161,6 +161,11 @@ $("ask").addEventListener("submit", async (e) => {
   if (attached.audio) request.audio_base64 = attached.audio;
   if (attached.image) request.image_base64 = attached.image;
   if (!text && !attached.audio && !attached.image) { showResult(el("p", { class: "error" }, "Type what you need, record a voice note or add a photo.")); return; }
+  run(request);
+});
+
+// Sends a dry-run request and shows the answer; the last request is kept for "Book this" and the home-type buttons.
+async function run(request) {
   const go = $("go");
   go.disabled = true;
   go.textContent = "Looking…";
@@ -175,7 +180,16 @@ $("ask").addEventListener("submit", async (e) => {
     go.disabled = false;
     go.textContent = "Find a cleaner";
   }
-});
+}
+
+// When CommonTape cannot price the job without the kind of home, one tap sends the same request with it added.
+const HOME_TYPES = [["Apartment", "an apartment"], ["Studio", "a studio"], ["House", "a house"], ["Condo", "a condo"], ["Townhouse", "a townhouse"]];
+
+function answerHomeType(words) {
+  const text = [last.request.text, `It is ${words}.`].filter(Boolean).join(" ");
+  $("text").value = text;
+  run({ ...last.request, text });
+}
 
 const showResult = (...nodes) => $("result").replaceChildren(...nodes);
 const money = (p) => (p.currency === "USD" ? `$${p.amount}` : `${p.amount} ${p.currency}`);
@@ -206,6 +220,10 @@ function render(answer) {
     nodes.push(el("h2", {}, "Close, but not a fit"), el("ul", {}, answer.near_misses.flatMap((m) => m.reasons.map((r) => el("li", {}, `${m.display_name}: ${r.label}`)))));
   }
   if (answer.plan) nodes.push(el("h2", {}, "The plan"), el("p", { class: answer.booked ? "plan-book" : "" }, answer.plan.reason));
+  if (answer.dry_run && answer.needs?.includes("home_type")) {
+    nodes.push(el("p", {}, "What kind of home is it?"),
+      el("div", { class: "row", id: "home-types" }, HOME_TYPES.map(([label, words]) => el("button", { type: "button", onclick: () => answerHomeType(words) }, label))));
+  }
   if (answer.booked) {
     nodes.push(el("div", { class: "card chosen" },
       el("div", {}, el("strong", {}, `Booked: ${answer.booked.business}`)),
