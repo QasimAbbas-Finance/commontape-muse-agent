@@ -104,6 +104,22 @@ test("a real booking: one hold and one book, with keys from the request, and the
   assert.equal(JSON.stringify(ct.calls[0].body).includes("Sam"), false, "the label says nothing about them");
 });
 
+test("the same request sent again is not booked twice, and the reason says so in plain words", async () => {
+  const ct = fakeCommonTape({ hold: { ok: false, status: 409, body: { error: { code: "IDEMPOTENCY_KEY_CONFLICT", message: "This idempotency key was already used with a different request." } } } });
+  const a = await run({ text: TYPED, dry_run: false, customer: CUSTOMER }, ct);
+  assert.equal(a.booked, null);
+  assert.equal(a.plan.reason, "This exact request was already booked once, so it was not booked again.");
+  assert.deepEqual(ct.calls.map((c) => c.name), ["search", "hold"]);
+});
+
+test("with nothing said about the home, CommonTape cannot price it, and the plan asks for the rooms", async () => {
+  const ct = fakeCommonTape({ search: { ok: true, status: 200, body: { merchants: [{ slug: "commontape-demo-cleaning" }] } } });
+  const a = await run({ text: "Please clean my place in ZIP 10001", dry_run: false, customer: CUSTOMER }, ct);
+  assert.equal(a.plan.action, "none");
+  assert.match(a.plan.reason, /how many bedrooms and bathrooms/);
+  assert.deepEqual(ct.calls.map((c) => c.name), ["search"]);
+});
+
 test("a real request without the customer's details is not booked", async () => {
   const ct = fakeCommonTape();
   const a = await run({ text: TYPED, dry_run: false }, ct);
