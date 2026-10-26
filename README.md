@@ -63,6 +63,11 @@ business, "CommonTape Demo Cleaning", so trying this agent never books a
 real cleaner. The client is read-only unless it is made otherwise, and a
 dry run never makes it otherwise.
 
+The sample voice note in `fixtures/` is made by `scripts/make-voice-note.sh`
+with eSpeak NG's own voice, which anyone may use (the macOS voices are for
+personal, non-commercial use only). The sample home photo will be made with
+Muse Image, so no one's real home is published.
+
 Copy `.env.example` to `.env.local` for settings. Never commit a key.
 
 ## Status
