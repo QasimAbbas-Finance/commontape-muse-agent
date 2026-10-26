@@ -21,6 +21,7 @@ const SEARCH = {
   matches: [
     {
       slug: "commontape-demo-cleaning", display_name: "CommonTape Demo Cleaning", service_key: "house_cleaning.standard",
+      timezone: "America/New_York",
       quote: { status: "priced", amount: 140, currency: "USD", quote_token: "tok" },
       available_windows: [
         { allocation_id: "a1", window_start: "2026-10-27T13:00:00+00:00", window_end: "2026-10-27T16:00:00+00:00" },
@@ -82,7 +83,7 @@ test("options carry CommonTape's exact price and an open time; unpriced or full 
   assert.deepEqual(optionsFrom(SEARCH), [{
     slug: "commontape-demo-cleaning", display_name: "CommonTape Demo Cleaning", service_key: "house_cleaning.standard",
     price: { amount: 140, currency: "USD" },
-    window_start: "2026-10-27T13:00:00+00:00", window_end: "2026-10-27T16:00:00+00:00", allocation_id: "a1",
+    window_start: "2026-10-27T13:00:00+00:00", window_end: "2026-10-27T16:00:00+00:00", timezone: "America/New_York", allocation_id: "a1",
   }]);
   assert.equal(optionsFrom(SEARCH, (ws) => ws[1])[0].allocation_id, "a2");
   assert.deepEqual(optionsFrom({}), []);
