@@ -131,6 +131,20 @@ test("the endpoint: dry run unless dry_run is false, plain 400s, 413 when too bi
   assert.equal((await res.json()).error, "Muse Spark did not answer: 401");
 });
 
-test("GET is refused with 405", () => {
-  assert.equal(GET().status, 405);
+test("a booking confirmed on the page goes ahead only if it is still the one the person saw", async () => {
+  const input = { text: TYPED, dry_run: false, customer: CUSTOMER };
+  const same = await run({ ...input, confirm: { slug: "commontape-demo-cleaning", allocation_id: "next-week-morning", amount: 140 } }, fakeCommonTape());
+  assert.equal(same.plan.action, "book");
+  const ct = fakeCommonTape();
+  const moved = await run({ ...input, confirm: { slug: "commontape-demo-cleaning", allocation_id: "next-week-morning", amount: 120 } }, ct);
+  assert.equal(moved.plan.action, "none");
+  assert.match(moved.plan.reason, /changed since you looked, so nothing was booked\. Now: CommonTape Demo Cleaning, a standard clean, \$140/);
+  assert.deepEqual(ct.calls.map((c) => c.name), ["search"]);
+  assert.equal((await post(JSON.stringify({ ...input, confirm: "yes" }), { model: stub, client: ct.client, now: NOW })).status, 400);
+});
+
+test("GET says what this copy can do, with no key in it", async () => {
+  const answer = await (await GET()).json();
+  assert.deepEqual([answer.ready, answer.model, answer.meta_key_connected, answer.hears_voice, answer.sees_photos], [true, "stub-no-key", false, false, false]);
+  assert.doesNotMatch(JSON.stringify(answer), /LLM\||api_key|MODEL_/);
 });

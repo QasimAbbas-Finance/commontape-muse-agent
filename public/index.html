@@ -6,14 +6,54 @@
   <title>CommonTape Muse Agent</title>
   <meta name="description" content="Ask Meta's AI for a cleaner, get a real booking. Built on Muse and CommonTape for the Meta Global AI Developer Hackathon.">
   <style>
-    :root { --bg: #ffffff; --fg: #1a1a1a; --muted: #5c5c5c; --line: #e2e2e2; }
-    @media (prefers-color-scheme: dark) { :root { --bg: #141414; --fg: #f2f2f2; --muted: #a8a8a8; --line: #2e2e2e; } }
+    :root {
+      --bg: #ffffff; --fg: #1a1a1a; --muted: #5c5c5c; --line: #e2e2e2; --card: #f6f6f4;
+      --accent: #1f5f4a; --accent-fg: #ffffff; --warn-bg: #fff4e0; --warn-fg: #6b4400; --bad: #a3271f; --good: #1f5f4a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141414; --fg: #f2f2f2; --muted: #a8a8a8; --line: #2e2e2e; --card: #1e1e1d;
+        --accent: #7fc8ab; --accent-fg: #0f1f19; --warn-bg: #3a2b0f; --warn-fg: #f3d49b; --bad: #ff8f86; --good: #7fc8ab;
+      }
+    }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-    main { max-width: 640px; margin: 0 auto; padding: 48px 16px; }
+    main { max-width: 640px; margin: 0 auto; padding: 40px 16px 48px; }
     h1 { font-size: 28px; line-height: 1.2; margin: 0 0 12px; }
-    p { margin: 0 0 16px; }
+    h2 { font-size: 18px; margin: 28px 0 8px; }
+    p { margin: 0 0 12px; }
+    a { color: var(--accent); }
     .muted { color: var(--muted); }
+    .small { font-size: 14px; }
+    .note { background: var(--warn-bg); color: var(--warn-fg); border-radius: 8px; padding: 10px 12px; font-size: 14px; margin: 16px 0; }
+    .note[hidden] { display: none; }
+    label { display: block; font-weight: 600; margin: 16px 0 6px; }
+    textarea, input[type=text], input[type=tel], input[type=email] {
+      width: 100%; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+    }
+    textarea { min-height: 96px; resize: vertical; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    button, .file {
+      font: inherit; border-radius: 8px; padding: 10px 14px; border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer;
+    }
+    button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+    button:disabled { opacity: 0.55; cursor: default; }
+    button.recording { border-color: var(--bad); color: var(--bad); }
+    .file { position: relative; margin: 0; font-weight: 400; }
+    .file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .file:focus-within { outline: 2px solid var(--accent); }
+    .chip { font-size: 14px; padding: 6px 10px; }
+    .attached { font-size: 14px; color: var(--muted); margin-top: 8px; }
+    .attached div { margin-top: 6px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 8px 0; }
+    .card.chosen { border-color: var(--accent); }
+    .price { font-weight: 700; }
+    .plan-book { color: var(--good); font-weight: 600; }
+    .error { color: var(--bad); }
+    ol, ul { padding-left: 20px; margin: 0; }
+    code { font-size: 13px; overflow-wrap: anywhere; }
+    details { margin-top: 20px; }
+    summary { cursor: pointer; font-weight: 600; }
     footer { border-top: 1px solid var(--line); margin-top: 32px; padding-top: 16px; font-size: 14px; }
   </style>
 </head>
@@ -21,9 +61,33 @@
   <main>
     <h1>Ask Meta's AI for a cleaner, get a real booking.</h1>
     <p>Send a voice note, a photo of your home or a few words. A Muse agent works out the job, finds cleaners on
-      CommonTape that can do it, shows the exact price, checks the booking before it makes it, and books a slot.</p>
-    <p class="muted">Being built now for the Meta Global AI Developer Hackathon, 26 Oct – 4 Nov 2026. This page will let you try it.</p>
-    <footer class="muted">Built with Muse Spark and Muse Voice Transcribe on <a href="https://commontape.com">CommonTape</a>.</footer>
+      <a href="https://commontape.com">CommonTape</a> that can do it, shows the exact price, checks the booking before it makes it, and books a slot.</p>
+    <p class="note">This demo books <strong>CommonTape Demo Cleaning</strong>, a pretend business that serves ZIP 10001 in New York.
+      No real cleaner is ever contacted, and demo bookings are deleted after a day. Everyone trying the demo shares it, so it can be busy.</p>
+    <p class="note" id="key-note" hidden></p>
+
+    <form id="ask">
+      <label for="text">What do you need cleaned?</label>
+      <textarea id="text" name="text" maxlength="2000" placeholder="A standard clean for my 2-bedroom, 1-bathroom apartment in ZIP 10001, any morning next week."></textarea>
+      <div class="row" aria-label="Examples">
+        <button type="button" class="chip" data-example="I need a standard clean for my 2-bedroom, 1-bathroom apartment in ZIP 10001, any morning next week.">Example: a standard clean</button>
+        <button type="button" class="chip" data-example="Standard clean for my 2-bedroom, 1-bathroom apartment in ZIP 10001 next week, but I can only pay 40 dollars in total.">Example: a $40 budget</button>
+      </div>
+      <div class="row">
+        <button type="button" id="record">Record a voice note</button>
+        <label class="file" for="photo">Add a photo<input type="file" id="photo" accept="image/*"></label>
+      </div>
+      <p class="attached" id="attached" aria-live="polite"></p>
+      <div class="row"><button type="submit" class="primary" id="go">Find a cleaner</button></div>
+      <p class="small muted">Finding a cleaner never books anything. Booking is a second step, and only when you say so.</p>
+    </form>
+
+    <section id="result" aria-live="polite"></section>
+
+    <footer class="muted">Built for the Meta Global AI Developer Hackathon, 26 Oct – 4 Nov 2026, with Meta's Muse Spark and
+      Muse Voice Transcribe on <a href="https://commontape.com">CommonTape</a>.
+      <a href="https://github.com/QasimAbbas-Finance/commontape-muse-agent">The code is public.</a></footer>
   </main>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
