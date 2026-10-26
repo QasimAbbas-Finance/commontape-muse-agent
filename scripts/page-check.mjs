@@ -56,7 +56,7 @@ try {
   await until("document.readyState === 'complete' && !!document.getElementById('ask')");
 
   const key = await until("!document.getElementById('key-note').hidden", 10_000).then(() => js("document.getElementById('key-note').textContent"));
-  check(/Meta key not connected yet/.test(key), "the page says the Meta key is not connected (stand-in mode)");
+  check(/model is not connected yet/.test(key), "the page says Meta's model is not connected (stand-in mode)");
   const page1 = await js("document.body.innerText");
   check(/Muse/.test(page1) && /CommonTape/.test(page1) && /pretend business/.test(page1), "the page names Muse and CommonTape and states the demo's limits");
   check(await noSideways(), "390 px: no sideways scroll before a request");
@@ -100,8 +100,8 @@ try {
   writeFileSync(join(dir, "recorded.wav"), wav);
   const probe = execFileSync("ffprobe", ["-v", "error", "-show_entries", "stream=codec_name,channels,sample_rate,bits_per_sample", "-of", "compact=p=0:nk=1", join(dir, "recorded.wav")]).toString().trim();
   check(probe === "pcm_s16le|24000|1|16", `the recorded voice note is mono 16-bit 24 kHz WAV (${probe}, ${wav.length} bytes)`);
-  await until("/Muse Voice Transcribe/.test(document.getElementById('result').innerText)", 30_000);
-  check(true, "without a key the page says voice notes need Muse Voice Transcribe");
+  await until("/Voice notes need a Meta model/.test(document.getElementById('result').innerText)", 30_000);
+  check(true, "without a Meta model the page says voice notes need one");
 
   // Photo: a 4000x3000 test image is shrunk in the browser to 1280 px on its longest side.
   execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-f", "lavfi", "-i", "testsrc=size=4000x3000:rate=1", "-frames:v", "1", join(dir, "big.jpg")]);

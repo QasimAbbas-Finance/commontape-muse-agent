@@ -29,10 +29,13 @@ let last = null; // the request last sent as a dry run, and its answer
 
 // What this copy can do: say so before anyone asks.
 fetch(API).then((r) => r.json()).then((s) => {
-  if (s.meta_key_connected) return;
+  if (s.meta_model_connected) {
+    $("models").textContent = `Meta's ${s.models.join(" and ")}`;
+    return;
+  }
   const note = $("key-note");
   note.hidden = false;
-  note.textContent = "Meta key not connected yet. Until it is, a stand-in that follows simple rules reads typed requests, and the trace says so (stub-no-key). Voice notes and photos need Muse.";
+  note.textContent = "Meta's model is not connected yet. Until it is, a stand-in that follows simple rules reads typed requests, and the trace says so (stub-no-key). Voice notes and photos need Muse.";
 }).catch(() => {});
 
 for (const chip of document.querySelectorAll("[data-example]")) {

@@ -14,7 +14,7 @@ try {
   const used = (re, input) => trace.some(t => t.step === "model" && re.test(t.name || "") && (!input || t.input === input));
   if (a.booked || trace.some(t => t.step === "tool" && /^(hold|book)$/.test(t.name || ""))) throw new Error("dry run held or booked");
   if (!used(/^muse-spark/)) throw new Error("no muse-spark call");
-  if (mode === "voice" && !(used(/^muse-voice-transcribe/) && (a.transcript || "").trim().length > 10)) throw new Error("no transcript");
+  if (mode === "voice" && !((used(/^muse-voice-transcribe/) || used(/^muse-spark-open/, "audio")) && (a.transcript || "").trim().length > 10)) throw new Error("no transcript");
   if (mode === "photo" && !used(/^muse-spark/, "image")) throw new Error("photo not read by muse-spark");
   const r = await fetch(process.env.CT + "/api/v1/search", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + process.env.DEMO_KEY }, body: JSON.stringify(a.job) });
   const s = await r.json();

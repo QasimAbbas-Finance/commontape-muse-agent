@@ -58,6 +58,28 @@ test("Muse Spark answering without the tool means the request is not a cleaning 
   assert.equal((await createModel({ MODEL_API_KEY: "k" }, { fetch }).understand({ text: "a table for two" })).about_cleaning, false);
 });
 
+test("with only a Baseten key, Muse Spark Open on Baseten hears the voice note in the same call that works out the job", async () => {
+  const sent = [];
+  const fetch = async (url, init) => {
+    sent.push({ url: String(url), body: JSON.parse(init.body), auth: new Headers(init.headers).get("authorization") });
+    return Response.json({ id: "c3", object: "chat.completion", created: 0, model: "meta-models/muse-spark-open-1026", choices: [{ index: 0, finish_reason: "tool_calls",
+      message: { role: "assistant", content: null, tool_calls: [{ id: "t1", type: "function", function: { name: "search_cleaners",
+        arguments: JSON.stringify({ about_cleaning: true, zip: "10001", bedrooms: 2, heard: "A standard clean in ZIP 10001." }) } }] } }] });
+  };
+  const open = createModel({ BASETEN_API_KEY: "test-key" }, { fetch });
+  assert.deepEqual([open.name, open.hearsAudio, open.seesImages, open.transcribe], ["muse-spark-open-1026", true, true, null]);
+  const job = await open.understand({ text: "", audio_base64: "UklGRgAAAA" });
+  assert.equal(job.heard, "A standard clean in ZIP 10001.");
+  assert.equal(sent[0].url, "https://inference.baseten.co/v1/chat/completions");
+  assert.equal(sent[0].auth, "Bearer test-key");
+  assert.equal(sent[0].body.model, "meta-models/muse-spark-open-1026");
+  assert.equal(sent[0].body.tools[0].function.name, "search_cleaners");
+  assert.deepEqual(sent[0].body.messages[1].content[1], { type: "audio_url", audio_url: { url: "data:audio/wav;base64,UklGRgAAAA" } });
+  assert.equal(createModel({ MODEL_API_KEY: "a", BASETEN_API_KEY: "b" }).name, "muse-spark-1.3", "the Meta Model API comes first when both keys are set");
+  assert.throws(() => createModel({ MODEL_MODE: "open" }), ModelError);
+  assert.throws(() => createModel({ MODEL_MODE: "llama" }), /muse, open or stub/);
+});
+
 test("a voice note goes to Muse Voice Transcribe as the cookbook sends it: a JSON part, then the WAV", async () => {
   let sent;
   const fetch = async (url, init) => { sent = { url, init }; return Response.json({ sessionId: "s", transcript: " a clean in ZIP 10001 ", turns: [] }); };

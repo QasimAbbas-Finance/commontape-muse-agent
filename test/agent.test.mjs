@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { GET } from "../api/agent.js";
-import { handle } from "../lib/handler.js";
+import { handle, status } from "../lib/handler.js";
 import { runAgent } from "../lib/agent.js";
-import { createModel, ModelError } from "../lib/model.js";
+import { createModel, ModelError, stubUnderstand } from "../lib/model.js";
 import { bookingKeys } from "../lib/plan.js";
 
 const CONTRACT_KEYS = ["dry_run", "transcript", "job", "options", "plan", "trace", "booked"];
@@ -68,10 +68,25 @@ test("a budget below every price: plan none with CommonTape's reason", async () 
 test("without a Meta key a voice note or a lone photo is answered honestly, with no search", async () => {
   const ct = fakeCommonTape();
   const voice = await run({ audio_base64: "UklGRgAAAA" }, ct);
-  assert.match(voice.plan.reason, /Muse Voice Transcribe.*no Meta key/);
+  assert.match(voice.plan.reason, /Voice notes need a Meta model/);
   const photo = await run({ image_base64: "/9j/AAAA" }, ct);
-  assert.match(photo.plan.reason, /Muse Spark.*no Meta key/);
+  assert.match(photo.plan.reason, /Photos need a Meta model/);
   assert.equal(ct.calls.length, 0);
+});
+
+test("a model that hears audio gets the voice note itself, and what it heard is the transcript", async () => {
+  const got = [];
+  const hearing = { name: "muse-spark-open-1026", seesImages: true, hearsAudio: true, transcribe: null,
+    understand: async (req) => { got.push(req); return { ...stubUnderstand(TYPED), heard: ` ${TYPED} ` }; } };
+  const ct = fakeCommonTape();
+  const a = await runAgent({ audio_base64: "UklGRgAAAA" }, { model: hearing, client: ct.client, now: NOW });
+  assert.deepEqual(got, [{ text: "", image_base64: undefined, audio_base64: "UklGRgAAAA" }]);
+  assert.equal(a.transcript, TYPED);
+  assert.deepEqual(a.trace[0], { step: "model", name: "muse-spark-open-1026", input: "audio" });
+  assert.equal(a.options[0].price.amount, 140);
+  const s = await status({ BASETEN_API_KEY: "test-key" }).json();
+  assert.deepEqual([s.meta_model_connected, s.models, s.hears_voice, s.sees_photos], [true, ["muse-spark-open-1026"], true, true]);
+  assert.doesNotMatch(JSON.stringify(s), /test-key/);
 });
 
 test("a request with no ZIP or not about cleaning is never searched", async () => {
@@ -164,6 +179,6 @@ test("a booking confirmed on the page goes ahead only if it is still the one the
 
 test("GET says what this copy can do, with no key in it", async () => {
   const answer = await (await GET()).json();
-  assert.deepEqual([answer.ready, answer.model, answer.meta_key_connected, answer.hears_voice, answer.sees_photos], [true, "stub-no-key", false, false, false]);
+  assert.deepEqual([answer.ready, answer.model, answer.meta_model_connected, answer.hears_voice, answer.sees_photos], [true, "stub-no-key", false, false, false]);
   assert.doesNotMatch(JSON.stringify(answer), /LLM\||api_key|MODEL_/);
 });

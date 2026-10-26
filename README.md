@@ -32,6 +32,15 @@ Through the Meta Model API (`https://api.meta.ai/v1`):
   calls CommonTape's tools, reads photos of the home, and explains its plan.
 - `muse-voice-transcribe-1.0`: turns a voice note into text.
 
+Or, where the Meta Model API is not open to the builder, Meta's open-weights
+model served by Baseten (`https://inference.baseten.co/v1`):
+
+- `meta-models/muse-spark-open-1026` (Muse Spark Open): the same agent,
+  with the same tool. It hears the voice note itself, writes down what was
+  said, and reads photos of the home.
+
+The trace names whichever model answered, so it always shows which one ran.
+
 ## How it works
 
 One endpoint, `POST /api/agent`, takes `text`, `audio_base64` or
@@ -79,5 +88,5 @@ key: a typed request becomes a CommonTape search, gets the demo business's
 exact price at a time that fits, and goes through the safety check. The
 stand-in names itself `stub-no-key` in the trace, so it is never mistaken
 for Muse. Muse Spark and Muse Voice Transcribe are wired in and switch on
-with the Meta key. The live demo runs in stand-in mode until then, and
+with the Meta key; Muse Spark Open on Baseten switches on with a Baseten key. The live demo runs in stand-in mode until then, and
 says so at the top of the page. Build log follows in the commits.
