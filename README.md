@@ -24,9 +24,41 @@ the same one any AI assistant uses. No CommonTape code is copied here.
 
 ## Meta models used
 
-Planned: Muse Spark (the agent, and reading photos of the home) and Muse
-Voice Transcribe (voice notes), through the Meta Model API.
+Through the Meta Model API (`https://api.meta.ai/v1`):
+
+- `muse-spark-1.3`: the agent itself. It turns a request into a job,
+  calls CommonTape's tools, reads photos of the home, and explains its plan.
+- `muse-voice-transcribe-1.0`: turns a voice note into text.
+
+## How it works
+
+One endpoint, `POST /api/agent`, takes `text`, `audio_base64` or
+`image_base64`, plus `dry_run`. Dry run is on unless the request says
+`"dry_run": false`, and in a dry run nothing is ever held or booked. The
+answer always has the same shape:
+
+| Field | What it holds |
+|---|---|
+| `transcript` | the voice note as text, when there was one |
+| `job` | the job the agent understood, as a CommonTape search |
+| `options` | businesses that can do it, each with CommonTape's exact price and a time |
+| `plan` | `book` or `none`, with the reason in plain words |
+| `trace` | every model and tool call, in order |
+| `booked` | the booking, when one was made |
+
+## Run it locally
+
+Needs Node 24 or newer.
+
+```sh
+npm install
+npm test
+npm run dev   # http://localhost:3000
+```
+
+Copy `.env.example` to `.env.local` for settings. Never commit a key.
 
 ## Status
 
-Day 1: project set up. Build log follows in the commits.
+Day 1: project set up, the endpoint answers in its final shape, the agent
+itself is not built yet. Build log follows in the commits.
