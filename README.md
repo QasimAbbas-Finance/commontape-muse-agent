@@ -63,7 +63,7 @@ Through the Meta Model API (`https://api.meta.ai/v1`):
 Or, where the Meta Model API is not open to the builder, Meta's open-weights
 model served by Baseten (`https://inference.baseten.co/v1`):
 
-- `meta-models/muse-spark-open-1026` (Muse Spark Open): the same agent,
+- `meta-models/muse-spark-open` (Muse Spark Open): the same agent,
   with the same tool. It hears the voice note itself, writes down what was
   said, and reads photos of the home.
 

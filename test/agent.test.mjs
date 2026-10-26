@@ -76,23 +76,23 @@ test("without a Meta key a voice note or a lone photo is answered honestly, with
 
 test("a model that hears audio gets the voice note itself, and what it heard is the transcript", async () => {
   const got = [];
-  const hearing = { name: "muse-spark-open-1026", seesImages: true, hearsAudio: true, transcribe: null,
+  const hearing = { name: "muse-spark-open", seesImages: true, hearsAudio: true, transcribe: null,
     understand: async (req) => { got.push(req); return { ...stubUnderstand(TYPED), heard: ` ${TYPED} ` }; } };
   const ct = fakeCommonTape();
   const a = await runAgent({ audio_base64: "UklGRgAAAA" }, { model: hearing, client: ct.client, now: NOW });
   assert.deepEqual(got, [{ text: "", image_base64: undefined, audio_base64: "UklGRgAAAA" }]);
   assert.equal(a.transcript, TYPED);
-  assert.deepEqual(a.trace[0], { step: "model", name: "muse-spark-open-1026", input: "audio" });
+  assert.deepEqual(a.trace[0], { step: "model", name: "muse-spark-open", input: "audio" });
   assert.equal(a.options[0].price.amount, 140);
   const s = await status({ BASETEN_API_KEY: "test-key" }).json();
-  assert.deepEqual([s.meta_model_connected, s.models, s.hears_voice, s.sees_photos], [true, ["muse-spark-open-1026"], true, true]);
+  assert.deepEqual([s.meta_model_connected, s.models, s.hears_voice, s.sees_photos], [true, ["muse-spark-open"], true, true]);
   assert.doesNotMatch(JSON.stringify(s), /test-key/);
 });
 
 test("the agent keeps inside the time limit: the model gets what is left, and no hold or book starts too late", async () => {
   let t = 0;
   const limits = [];
-  const timed = (ms) => ({ name: "muse-spark-open-1026", seesImages: true, hearsAudio: true, transcribe: null,
+  const timed = (ms) => ({ name: "muse-spark-open", seesImages: true, hearsAudio: true, transcribe: null,
     understand: async (req, l) => { limits.push(l.timeoutMs); t += ms; return stubUnderstand(TYPED); } });
   const real = { text: TYPED, dry_run: false, customer: CUSTOMER };
 

@@ -62,17 +62,17 @@ test("with only a Baseten key, Muse Spark Open on Baseten hears the voice note i
   const sent = [];
   const fetch = async (url, init) => {
     sent.push({ url: String(url), body: JSON.parse(init.body), auth: new Headers(init.headers).get("authorization") });
-    return Response.json({ id: "c3", object: "chat.completion", created: 0, model: "meta-models/muse-spark-open-1026", choices: [{ index: 0, finish_reason: "tool_calls",
+    return Response.json({ id: "c3", object: "chat.completion", created: 0, model: "meta-models/muse-spark-open", choices: [{ index: 0, finish_reason: "tool_calls",
       message: { role: "assistant", content: null, tool_calls: [{ id: "t1", type: "function", function: { name: "search_cleaners",
         arguments: JSON.stringify({ about_cleaning: true, zip: "10001", bedrooms: 2, heard: "A standard clean in ZIP 10001." }) } }] } }] });
   };
   const open = createModel({ BASETEN_API_KEY: "test-key" }, { fetch });
-  assert.deepEqual([open.name, open.hearsAudio, open.seesImages, open.transcribe], ["muse-spark-open-1026", true, true, null]);
+  assert.deepEqual([open.name, open.hearsAudio, open.seesImages, open.transcribe], ["muse-spark-open", true, true, null]);
   const job = await open.understand({ text: "", audio_base64: "UklGRgAAAA" });
   assert.equal(job.heard, "A standard clean in ZIP 10001.");
   assert.equal(sent[0].url, "https://inference.baseten.co/v1/chat/completions");
   assert.equal(sent[0].auth, "Bearer test-key");
-  assert.equal(sent[0].body.model, "meta-models/muse-spark-open-1026");
+  assert.equal(sent[0].body.model, "meta-models/muse-spark-open");
   assert.equal(sent[0].body.tools[0].function.name, "search_cleaners");
   assert.deepEqual(sent[0].body.messages[1].content[1], { type: "audio_url", audio_url: { url: "data:audio/wav;base64,UklGRgAAAA" } });
   assert.equal(createModel({ MODEL_API_KEY: "a", BASETEN_API_KEY: "b" }).name, "muse-spark-1.3", "the Meta Model API comes first when both keys are set");
