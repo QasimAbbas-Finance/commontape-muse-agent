@@ -227,15 +227,18 @@ personal, non-commercial use only).
 
 As of 26 Oct 2026:
 
-- **Live:** the page and the agent, with CommonTape's real prices, the full
-  safety check and real bookings at the pretend business. On 26 Oct a live
-  test booked it five times through this site, with no wrong booking and no
-  duplicate, and cancelled every one. That ran on the stand-in model.
-- **Built and tested, not yet run live:** Muse Spark, Muse Voice Transcribe
-  and Muse Spark Open, tested against stand-in answers in the shape their
-  docs give. Meta's developer console is not open in the builder's country,
-  so the first real calls will go through Muse Spark Open on Baseten; the
-  live demo switches to it as soon as its key is set.
+- **Live on Meta's model:** the live demo runs on Muse Spark Open, served by
+  Baseten. A typed request comes back in about 6 seconds and a voice note in
+  about 10, each with the right job and CommonTape's exact price, and the
+  model hears the voice note itself and writes down what was said. Photos
+  reach the model and it describes what it sees.
+- **Live bookings:** on 26 Oct a live test booked the pretend business five
+  times through this site, with no wrong booking and no duplicate, and
+  cancelled every one. That ran on the stand-in model, before Muse was
+  connected.
+- **Built, not yet run live:** Muse Spark and Muse Voice Transcribe through
+  the Meta Model API. Meta's developer console is not open in the builder's
+  country, so the live demo uses Muse Spark Open.
 - **Still to come:** the sample home photo and the video.
 
 ## Licence
