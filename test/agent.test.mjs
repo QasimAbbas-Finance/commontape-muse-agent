@@ -53,6 +53,7 @@ test("typed request, dry run: CommonTape's exact price at a morning next week, a
   assert.deepEqual(a.trace, [{ step: "model", name: "stub-no-key", input: "text" }, { step: "tool", name: "search", input: a.job }]);
   assert.equal(a.booked, null);
   assert.deepEqual(ct.made, [true], "only a read-only client was made");
+  assert.equal("customer_ref" in a.job, false, "a dry run sends no customer label");
 });
 
 test("a budget below every price: plan none with CommonTape's reason", async () => {
@@ -99,6 +100,8 @@ test("a real booking: one hold and one book, with keys from the request, and the
   assert.deepEqual(a.booked, { transaction_id: "t1", state: "booked", business: "CommonTape Demo Cleaning", price: { amount: 140, currency: "USD" }, window_start: "2026-11-03T14:00:00+00:00" });
   assert.deepEqual(a.trace.map((t) => t.name), ["stub-no-key", "search", "hold", "book"]);
   assert.deepEqual(ct.made, [true, false]);
+  assert.match(ct.calls[0].body.customer_ref, /^cust-[0-9a-f]{24}$/, "a real booking labels the customer for CommonTape");
+  assert.equal(JSON.stringify(ct.calls[0].body).includes("Sam"), false, "the label says nothing about them");
 });
 
 test("a real request without the customer's details is not booked", async () => {
