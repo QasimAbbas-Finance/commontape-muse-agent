@@ -80,6 +80,15 @@ test("with only a Baseten key, Muse Spark Open on Baseten hears the voice note i
   assert.throws(() => createModel({ MODEL_MODE: "llama" }), /muse, open or stub/);
 });
 
+test("a model call gets one try within the time it is given, and a slow one is answered in plain words", async () => {
+  let calls = 0;
+  const hanging = (url, init) => { calls++; return new Promise((_, fail) => init.signal.addEventListener("abort", () => fail(init.signal.reason))); };
+  await assert.rejects(createModel({ BASETEN_API_KEY: "k" }, { fetch: hanging }).understand({ text: "a clean in 10001" }, { timeoutMs: 50 }),
+    { message: "Muse Spark Open took too long to answer, so nothing was booked. Try again." });
+  assert.equal(calls, 1, "one try only");
+  await assert.rejects(createModel({ MODEL_API_KEY: "k" }, { fetch: hanging }).transcribe("AAAA", { timeoutMs: 50 }), /Muse Voice Transcribe took too long/);
+});
+
 test("a voice note goes to Muse Voice Transcribe as the cookbook sends it: a JSON part, then the WAV", async () => {
   let sent;
   const fetch = async (url, init) => { sent = { url, init }; return Response.json({ sessionId: "s", transcript: " a clean in ZIP 10001 ", turns: [] }); };

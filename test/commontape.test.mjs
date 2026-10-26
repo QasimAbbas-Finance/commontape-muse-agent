@@ -70,6 +70,18 @@ test("a 429 that asks for a long wait is handed back, not waited out", async () 
   assert.equal(f.calls.length, 1);
 });
 
+test("with a deadline, no call is sent and no wait is taken that would run past it, and a slow answer is cut off", async () => {
+  const late = fake([]);
+  const gone = await createClient({ ...late.opts, deadline: 500 }).search({ zip: "10001" });
+  assert.deepEqual([gone.status, gone.body.error.code, late.calls.length], [0, "TIMEOUT", 0]);
+  const busy = fake([{ status: 429, body: { error: { code: "RATE_LIMITED", retry_after_seconds: 5 } } }]);
+  const r = await createClient({ ...busy.opts, deadline: 4_000 }).search({ zip: "10001" });
+  assert.deepEqual([r.status, busy.calls.length, busy.slept], [429, 1, []]);
+  const hanging = (url, init) => new Promise((_, fail) => init.signal.addEventListener("abort", () => fail(init.signal.reason)));
+  const cut = await createClient({ fetch: hanging, callMs: 50 }).search({ zip: "10001" });
+  assert.deepEqual([cut.status, cut.body.error.code], [0, "TIMEOUT"]);
+});
+
 test("calls are spaced out, and an unreachable CommonTape answers status 0 after its retries", async () => {
   const f = fake([new Error("socket hang up"), new Error("socket hang up"), new Error("socket hang up")]);
   const r = await createClient(f.opts).search({ zip: "10001" });

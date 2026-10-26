@@ -57,6 +57,14 @@ answer always has the same shape:
 | `trace` | every model and tool call, in order |
 | `booked` | the booking, when one was made |
 
+The demo key is shared by everyone trying CommonTape (30 calls a minute), so
+each person can ask the agent 12 times a minute and the whole site 25 times;
+past that it answers 429 with how long to wait, before CommonTape is asked.
+Every request finishes inside the host's 60 seconds: the model gets one try
+with the time that is left after CommonTape's steps, each CommonTape call is
+cut off at 8 seconds, and no hold or booking is started without the time to
+finish it or give it back.
+
 ## Run it locally
 
 Needs Node 24 or newer.
