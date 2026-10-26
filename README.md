@@ -72,6 +72,9 @@ Copy `.env.example` to `.env.local` for settings. Never commit a key.
 
 ## Status
 
-Day 1: project set up, the endpoint answers in its final shape, and the
-CommonTape connection gets real prices from the demo business. The agent
-itself is not built yet. Build log follows in the commits.
+Day 1: the agent works end to end in its stand-in mode, which needs no Meta
+key: a typed request becomes a CommonTape search, gets the demo business's
+exact price at a time that fits, and goes through the safety check. The
+stand-in names itself `stub-no-key` in the trace, so it is never mistaken
+for Muse. Muse Spark and Muse Voice Transcribe are wired in and switch on
+with the Meta key. Build log follows in the commits.
