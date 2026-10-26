@@ -1,4 +1,6 @@
 {
+  "framework": null,
+  "outputDirectory": "public",
   "functions": {
     "api/agent.js": {
       "maxDuration": 60

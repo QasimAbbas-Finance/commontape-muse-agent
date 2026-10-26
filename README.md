@@ -2,6 +2,8 @@
 
 Ask Meta's AI for a cleaner, get a real booking.
 
+Live demo: https://commontape-muse-agent.vercel.app
+
 A person sends a voice note or a photo of their home. A Muse-powered agent
 works out the job, finds local cleaning businesses that can do it, gets an
 exact price, checks the booking before it makes it, and books a slot.
@@ -77,4 +79,5 @@ key: a typed request becomes a CommonTape search, gets the demo business's
 exact price at a time that fits, and goes through the safety check. The
 stand-in names itself `stub-no-key` in the trace, so it is never mistaken
 for Muse. Muse Spark and Muse Voice Transcribe are wired in and switch on
-with the Meta key. Build log follows in the commits.
+with the Meta key. The live demo runs in stand-in mode until then, and
+says so at the top of the page. Build log follows in the commits.
