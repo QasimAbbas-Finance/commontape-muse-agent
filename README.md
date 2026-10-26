@@ -54,11 +54,19 @@ Needs Node 24 or newer.
 npm install
 npm test
 npm run dev   # http://localhost:3000
+npm run ct-search   # read-only: searches CommonTape's demo business, never holds or books
 ```
+
+The CommonTape connection (`lib/commontape.js`) uses the demo key that
+CommonTape publishes on its docs page. That key reaches only a pretend
+business, "CommonTape Demo Cleaning", so trying this agent never books a
+real cleaner. The client is read-only unless it is made otherwise, and a
+dry run never makes it otherwise.
 
 Copy `.env.example` to `.env.local` for settings. Never commit a key.
 
 ## Status
 
-Day 1: project set up, the endpoint answers in its final shape, the agent
+Day 1: project set up, the endpoint answers in its final shape, and the
+CommonTape connection gets real prices from the demo business. The agent
 itself is not built yet. Build log follows in the commits.
