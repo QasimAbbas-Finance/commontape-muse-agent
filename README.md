@@ -85,8 +85,10 @@ flowchart LR
 ```
 
 1. **Hear and see.** A voice note goes to Muse Voice Transcribe, or straight
-   to Muse Spark Open, which hears it in the same call. A photo goes to the
-   model as an image.
+   to Muse Spark Open, which hears it in the same call. Now and then Muse
+   Spark Open hears a voice note without its ZIP, so then it is asked once
+   more, and the trace shows both listens. A photo goes to the model as an
+   image.
 2. **Understand.** The model answers with one tool call, `search_cleaners`:
    the ZIP, the kind of clean, the home (type, bedrooms, bathrooms), the
    budget, the times asked for, and what it heard or saw.

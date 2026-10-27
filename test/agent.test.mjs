@@ -89,6 +89,45 @@ test("a model that hears audio gets the voice note itself, and what it heard is 
   assert.doesNotMatch(JSON.stringify(s), /test-key/);
 });
 
+test("a voice note heard without its ZIP is heard once more, and the trace shows both listens", async () => {
+  const NO_ZIP = { about_cleaning: true, heard: "I need a standard clean for my two-bedroom apartment." };
+  const listening = (...answers) => {
+    const calls = [];
+    return { calls, model: { name: "muse-spark-open", seesImages: true, hearsAudio: true, transcribe: null,
+      understand: async (req, l) => { calls.push({ req, l }); const next = answers.shift(); if (next instanceof Error) throw next; return next; } } };
+  };
+  const heardRight = { ...stubUnderstand(TYPED), heard: TYPED };
+
+  const fixed = listening(NO_ZIP, heardRight);
+  const a = await runAgent({ audio_base64: "UklGRgAAAA" }, { model: fixed.model, client: fakeCommonTape().client, now: NOW });
+  assert.equal(fixed.calls.length, 2);
+  assert.deepEqual(fixed.calls[1].req, fixed.calls[0].req, "the same voice note both times");
+  assert.deepEqual(a.trace.slice(0, 2), [{ step: "model", name: "muse-spark-open", input: "audio" }, { step: "model", name: "muse-spark-open", input: "audio", again: true }]);
+  assert.equal(a.trace[2].name, "search");
+  assert.equal(a.transcript, TYPED);
+  assert.equal(a.options[0].price.amount, 140);
+
+  const twice = listening(NO_ZIP, NO_ZIP);
+  const b = await runAgent({ audio_base64: "UklGRgAAAA" }, { model: twice.model, client: fakeCommonTape().client, now: NOW });
+  assert.equal(twice.calls.length, 2, "one retry, never more");
+  assert.equal(b.plan.reason, "A 5-digit US ZIP code is needed.");
+
+  const slow = listening(NO_ZIP, new ModelError("Muse Spark Open took too long to answer, so nothing was booked. Try again."));
+  const c = await runAgent({ audio_base64: "UklGRgAAAA" }, { model: slow.model, client: fakeCommonTape().client, now: NOW });
+  assert.equal(c.transcript, NO_ZIP.heard, "a slow second listen keeps the first answer");
+  assert.equal(c.trace.length, 1);
+
+  let t = 0;
+  const late = listening(NO_ZIP, heardRight);
+  late.model.understand = ((inner) => async (req, l) => { t += 30_000; return inner(req, l); })(late.model.understand);
+  await runAgent({ audio_base64: "UklGRgAAAA" }, { model: late.model, client: fakeCommonTape().client, now: NOW, clock: () => t, deadline: 55_000 });
+  assert.equal(late.calls.length, 1, "no second listen without 10 seconds for it");
+
+  const typed = listening(NO_ZIP);
+  await runAgent({ text: "A standard clean for my two-bedroom apartment." }, { model: typed.model, client: fakeCommonTape().client, now: NOW });
+  assert.equal(typed.calls.length, 1, "typed words are never asked twice");
+});
+
 test("the agent keeps inside the time limit: the model gets what is left, and no hold or book starts too late", async () => {
   let t = 0;
   const limits = [];

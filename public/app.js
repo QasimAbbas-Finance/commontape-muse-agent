@@ -201,6 +201,7 @@ const sameChoice = (o, c) => c && o.slug === c.slug && o.allocation_id === c.all
 
 function stepWords(t) {
   if (t.step === "model" && t.name === "stub-no-key") return `A stand-in with no Meta key read the ${t.input} (stub-no-key)`;
+  if (t.step === "model" && t.again) return `Meta's ${t.name} heard the voice note again, because no ZIP came through the first time`;
   if (t.step === "model") return `Meta's ${t.name} read the ${t.input === "audio" ? "voice note" : t.input}`;
   return `CommonTape ${t.name}`;
 }
