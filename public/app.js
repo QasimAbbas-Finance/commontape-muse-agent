@@ -2,6 +2,7 @@
 // Voice notes are recorded in the browser and sent as mono 16-bit 24 kHz WAV, the format Muse Voice Transcribe takes;
 // photos are shrunk in the browser (which also drops their camera details) to stay well under the host's body limit.
 const API = "/api/agent";
+const CANCEL_API = "/api/cancel";
 const MAX_RECORD_MS = 45_000;
 const PHOTO_EDGE = 1280;
 const RATE = 24_000;
@@ -146,8 +147,8 @@ function showAttached(message) {
   }
 }
 
-async function ask(request) {
-  const res = await fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(request) });
+async function ask(request, url = API) {
+  const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(request) });
   const answer = await res.json().catch(() => ({ error: `The agent answered ${res.status}.` }));
   if (!res.ok) throw new Error(answer.error || `The agent answered ${res.status}.`);
   return answer;
@@ -225,10 +226,15 @@ function render(answer) {
       el("div", { class: "row", id: "home-types" }, HOME_TYPES.map(([label, words]) => el("button", { type: "button", onclick: () => answerHomeType(words) }, label))));
   }
   if (answer.booked) {
+    const gone = answer.booked.state === "cancelled";
     nodes.push(el("div", { class: "card chosen" },
-      el("div", {}, el("strong", {}, `Booked: ${answer.booked.business}`)),
+      el("div", {}, el("strong", {}, `${gone ? "Cancelled" : "Booked"}: ${answer.booked.business}`)),
       el("div", {}, `${money(answer.booked.price)} · ${when({ window_start: answer.booked.window_start, timezone: answer.plan.choice?.timezone })}`),
       el("div", { class: "small muted" }, `CommonTape says: ${answer.booked.state}. Reference ${String(answer.booked.transaction_id).slice(0, 8)}.`)));
+    if (!gone) {
+      nodes.push(el("div", { class: "row" }, el("button", { type: "button", id: "cancel-booking", onclick: () => cancelBooking(answer) }, "Cancel this booking")),
+        el("p", { id: "cancel-error", class: "error", "aria-live": "polite" }));
+    }
   } else if (answer.dry_run && answer.plan?.choice) {
     nodes.push(el("div", { class: "row" }, el("button", { type: "button", class: "primary", id: "book-open", onclick: openBooking }, "Book this")));
   }
@@ -273,5 +279,21 @@ async function book(e) {
     $("book-error").textContent = err.message;
     go.disabled = false;
     go.textContent = "Book it";
+  }
+}
+
+// Cancels the booking just made, then shows CommonTape's own status for it, with the two calls added to the trace.
+async function cancelBooking(answer) {
+  const go = $("cancel-booking");
+  go.disabled = true;
+  go.textContent = "Cancelling…";
+  try {
+    const done = await ask({ transaction_id: answer.booked.transaction_id }, CANCEL_API);
+    if (!done.cancelled) throw new Error(done.reason);
+    render({ ...answer, plan: { ...answer.plan, reason: done.reason }, booked: { ...answer.booked, state: done.state }, trace: [...answer.trace, ...done.trace] });
+  } catch (err) {
+    $("cancel-error").textContent = err.message;
+    go.disabled = false;
+    go.textContent = "Cancel this booking";
   }
 }

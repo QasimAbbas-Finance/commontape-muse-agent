@@ -1,4 +1,4 @@
-// Local stand-in for Vercel: serves public/ and routes /api/agent to the same handlers Vercel runs.
+// Local stand-in for Vercel: serves public/ and routes /api/agent and /api/cancel to the same handlers Vercel runs.
 // Usage: npm run dev  (PORT defaults to 3000)
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
@@ -9,8 +9,11 @@ const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC = resolve(import.meta.dirname, "..", "public");
 const TYPES = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".wav": "audio/wav" };
 
+const API_FILES = { "/api/agent": "../api/agent.js", "/api/cancel": "../api/cancel.js" };
+const apiFile = (url) => API_FILES[new URL(url, "http://localhost").pathname];
+
 async function api(req, res) {
-  const handlers = await import("../api/agent.js");
+  const handlers = await import(apiFile(req.url));
   const handler = handlers[req.method];
   if (typeof handler !== "function") {
     res.writeHead(405, { "content-type": "application/json" }).end(JSON.stringify({ error: "Method not allowed." }));
@@ -41,7 +44,7 @@ async function file(req, res) {
 }
 
 createServer((req, res) => {
-  const route = req.url.startsWith("/api/agent") ? api : file;
+  const route = apiFile(req.url) ? api : file;
   route(req, res).catch((err) => {
     console.error(err);
     if (!res.headersSent) res.writeHead(500, { "content-type": "application/json" });

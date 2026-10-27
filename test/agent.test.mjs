@@ -99,7 +99,7 @@ test("the agent keeps inside the time limit: the model gets what is left, and no
   await runAgent({ text: TYPED }, { model: timed(0), client: fakeCommonTape().client, now: NOW, clock: () => t, deadline: 55_000 });
   const slow = fakeCommonTape();
   const late = await runAgent(real, { model: timed(36_000), client: slow.client, now: NOW, clock: () => t, deadline: t + 55_000 });
-  assert.deepEqual(limits, [40_000, 26_000], "a dry run lets the model take 40 s; a booking keeps 29 s for CommonTape");
+  assert.deepEqual(limits, [39_000, 19_000], "a dry run keeps 16 s for the search; a booking keeps 36 s for CommonTape");
   assert.equal(late.plan.reason, "This took too long to finish safely, so nothing was booked. Try again.");
   assert.deepEqual(slow.calls.map((c) => c.name), ["search"], "no hold is started with too little time left");
 

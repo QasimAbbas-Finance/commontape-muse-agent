@@ -29,7 +29,8 @@ Open the live demo on a phone or a laptop and:
    **Townhouse** sends the same request again with that added.
 4. After a request, press **Book this**, then **Use sample details** and
    **Book it**. That books the slot for real, at a pretend business (below),
-   and shows the booking.
+   and shows the booking. **Cancel this booking** cancels it at CommonTape,
+   and the page shows CommonTape's own status for it afterwards.
 
 On the page, every request is a dry run until **Book it** is pressed, and a
 dry run never holds or books anything. Bookings go only to "CommonTape Demo
@@ -47,7 +48,7 @@ Everything in this repository was written during the hackathon, starting
 | The agent: request to job to search to safety check to booking | [CommonTape](https://commontape.com), a live service where small cleaning businesses publish their prices, service area and open times so AI agents can book them |
 | The Meta model wiring: Muse Spark, Muse Voice Transcribe, Muse Spark Open | CommonTape's public agent connection (search, hold, book, cancel) and its published demo key |
 | The safety check, the time budget and the polite limit | The pretend business "CommonTape Demo Cleaning" |
-| The page: typing, voice recording, photos, the trace, Book this | |
+| The page: typing, voice recording, photos, the trace, Book this, Cancel this booking | |
 | The tests, the voice-note fixture and the checks in `scripts/` | |
 
 CommonTape is a separate, private product built before the hackathon. This
@@ -97,7 +98,7 @@ flowchart LR
 5. **Book.** Only when the check says book and it is not a dry run: one hold,
    then one book. If the book fails, the hold is given back at once.
 
-One endpoint, `POST /api/agent`, takes `text`, `audio_base64` or
+The agent's endpoint, `POST /api/agent`, takes `text`, `audio_base64` or
 `image_base64`, plus `dry_run`. The answer always has the same shape:
 
 | Field | What it holds |
@@ -108,6 +109,10 @@ One endpoint, `POST /api/agent`, takes `text`, `audio_base64` or
 | `plan` | `book` or `none`, with the reason in plain words |
 | `trace` | every model and tool call, in order |
 | `booked` | the booking, when one was made |
+
+`POST /api/cancel` takes a booking's `transaction_id`, cancels it at
+CommonTape (pressing it twice is still one cancel) and reads CommonTape's
+status for it back.
 
 ### The safety check
 
@@ -136,8 +141,9 @@ The demo key is shared by everyone trying CommonTape (30 calls a minute), so
 each person can ask the agent 12 times a minute and the whole site 25 times;
 past that it answers 429 with how long to wait, before CommonTape is asked.
 Every request finishes inside the host's 60 seconds: the model gets one try
-with the time that is left after CommonTape's steps, each CommonTape call is
-cut off at 8 seconds, and no hold or booking is started without the time to
+with the time that is left after CommonTape's steps, a CommonTape search is
+cut off at 15 seconds (it takes about 1.5, and now and then about 12) and a
+hold or a booking at 8, and no hold or booking is started without the time to
 finish it or give it back.
 
 ## For the judges
@@ -220,7 +226,7 @@ removed.
 
 | Path | What it is |
 |---|---|
-| `api/agent.js` | the endpoint, as a Vercel function |
+| `api/agent.js`, `api/cancel.js` | the endpoints, as Vercel functions |
 | `lib/agent.js` | the agent's steps and the trace |
 | `lib/model.js` | the Meta models, the `search_cleaners` tool, and the stand-in |
 | `lib/plan.js` | the safety check |

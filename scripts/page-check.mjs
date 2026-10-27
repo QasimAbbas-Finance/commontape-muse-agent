@@ -73,11 +73,14 @@ try {
   check(/How the agent worked \(2 steps\)/.test(typed.text), "the trace is shown (2 steps)");
   check(await noSideways(), "390 px: no sideways scroll with results");
 
-  // Book it: the form, the sample details, and the request it sends; the answer is a stand-in, so nothing is booked.
+  // Book it, then cancel it: the form, the sample details, and the requests they send; the answers are stand-ins, so
+  // nothing is booked or cancelled.
   await js("document.getElementById('book-open').click(); [...document.querySelectorAll('#book button')].find(b => /sample/.test(b.textContent)).click(); true");
   await js(`window.__realFetch = window.fetch; window.fetch = async (u, o) => { const b = JSON.parse(o.body); window.__bodies.push(b);
+    if (String(u).endsWith("/api/cancel")) return new Response(JSON.stringify({ cancelled: true, state: "cancelled", reason: "Cancelled (stand-in answer).",
+      trace: [{ step: "tool", name: "cancel" }, { step: "tool", name: "status" }] }), { status: 200 });
     return new Response(JSON.stringify({ dry_run: false, transcript: null, job: {}, options: [], trace: [], plan: { action: "book", reason: "Booking (stand-in answer).", choice: { timezone: "America/New_York" } },
-      booked: { transaction_id: "00000000-check", state: "booked", business: "CommonTape Demo Cleaning", price: { amount: 140, currency: "USD" }, window_start: "2026-11-02T13:00:00Z" } }), { status: 200 }); }; true`);
+      booked: { transaction_id: "00000000-0000-4000-8000-00000000c4ec", state: "booked", business: "CommonTape Demo Cleaning", price: { amount: 140, currency: "USD" }, window_start: "2026-11-02T13:00:00Z" } }), { status: 200 }); }; true`);
   await js("document.getElementById('book-go').click(); true");
   await until("/Booked: CommonTape Demo Cleaning/.test(document.getElementById('result').innerText)", 10_000);
   const sent = await js("window.__bodies.at(-1)");
@@ -86,6 +89,12 @@ try {
     "\"Book it\" resends the same request with dry_run false and the customer's details");
   check(sent.confirm?.slug === "commontape-demo-cleaning" && typeof sent.confirm?.amount === "number" && Boolean(sent.confirm?.allocation_id),
     `"Book it" names the option the person saw (${sent.confirm?.amount} at ${sent.confirm?.allocation_id?.slice(0, 8)})`);
+  await js("document.getElementById('cancel-booking').click(); true");
+  await until("/Cancelled: CommonTape Demo Cleaning/.test(document.getElementById('result').innerText)", 10_000);
+  const cancelled = await js("({ sent: window.__bodies.at(-1), text: document.getElementById('result').innerText, button: !!document.getElementById('cancel-booking') })");
+  check(cancelled.sent.transaction_id === "00000000-0000-4000-8000-00000000c4ec" && Object.keys(cancelled.sent).length === 1 && !cancelled.button
+    && /CommonTape says: cancelled/.test(cancelled.text) && /How the agent worked \(2 steps\)/.test(cancelled.text),
+    "\"Cancel this booking\" sends only the booking's id, then shows CommonTape's status and the cancel in the trace");
   await js("window.fetch = window.__realFetch; true");
 
   // Home-type buttons: a request with no kind of home gets no price; one tap resends it with "It is an apartment." added.

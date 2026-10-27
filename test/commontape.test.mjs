@@ -78,8 +78,10 @@ test("with a deadline, no call is sent and no wait is taken that would run past 
   const r = await createClient({ ...busy.opts, deadline: 4_000 }).search({ zip: "10001" });
   assert.deepEqual([r.status, busy.calls.length, busy.slept], [429, 1, []]);
   const hanging = (url, init) => new Promise((_, fail) => init.signal.addEventListener("abort", () => fail(init.signal.reason)));
-  const cut = await createClient({ fetch: hanging, callMs: 50 }).search({ zip: "10001" });
+  const cut = await createClient({ fetch: hanging, readMs: 50 }).search({ zip: "10001" });
   assert.deepEqual([cut.status, cut.body.error.code], [0, "TIMEOUT"]);
+  const cutWrite = await createClient({ fetch: hanging, readOnly: false, callMs: 50 }).hold({ quote_token: "q", allocation_id: "a" });
+  assert.deepEqual([cutWrite.status, cutWrite.body.error.code], [0, "TIMEOUT"], "a write has its own, shorter cut-off");
 });
 
 test("calls are spaced out, and an unreachable CommonTape answers status 0 after its retries", async () => {
